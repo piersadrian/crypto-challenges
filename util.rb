@@ -2,17 +2,31 @@ require 'base64'
 
 module Detect
   class << self
-    COMMON_LETTERS = %w(e t a o i n s h r d l)
+    COMMON_LETTERS = %w(\  e t a o i n s r h l d c u m f p g w y b v k x j q z)
 
-    def scorefreq(plaintext)
-      score = 0
-      COMMON_LETTERS.reverse.each_with_index do |letter, idx|
-        count = plaintext.count(letter)
-        score += count * idx
+    def scorefreq_string(plaintext)
+      plaintext = plaintext.downcase
+      COMMON_LETTERS.reverse.each_with_index.reduce(0) do |score, (letter, idx)|
+        score + (plaintext.count(letter) * idx)
       end
-      score
+    end
+
+    def scorebytes_keybytes(cipherbytes, key_bytes)
+      xored_arr = ::Convert.xorbarr(cipherbytes, key_bytes)
+      plaintext = ::Convert.barr2s(xored_arr)
+      Candidate.new(key_bytes, plaintext.strip, scorefreq_string(plaintext))
+    end
+
+    def getsinglecharkey(cipherbytes)
+      candidates = (0..255).map do |byte|
+        ::Detect.scorebytes_keybytes(cipherbytes, [byte])
+      end
+
+      candidates.max_by(&:score)
     end
   end
+
+  Candidate = Struct.new(:key_bytes, :plaintext, :score)
 end
 
 module Convert
@@ -37,8 +51,14 @@ module Convert
       [hex_str].pack('H*').bytes
     end
 
+    def s2barr(str)
+      str.bytes
+    end
+
     def xorbarr(byte_arr1, byte_arr2)
-      byte_arr1.zip(byte_arr2).map { |l, r| l ^ r }
+      byte_arr1, byte_arr2 = byte_arr2, byte_arr1 if byte_arr2.count > byte_arr1.count
+      barr2len = byte_arr2.length
+      byte_arr1.each_with_index.map { |b, i| b ^ byte_arr2[i % barr2len] }
     end
 
     def xorh(hex1, hex2)
