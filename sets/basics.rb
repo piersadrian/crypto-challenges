@@ -1,3 +1,5 @@
+require_relative '../crypto'
+
 set "Basics" do
   challenge "Convert hex to base64" do
     hex_str = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
@@ -18,16 +20,16 @@ set "Basics" do
     cipherhex   = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
     cipherbytes = ::Convert.h2barr(cipherhex)
 
-    best = ::Detect.getsinglecharkey(cipherbytes)
+    best = ::Decrypt.findsinglecharkey(cipherbytes)
     best.plaintext == "Cooking MC's like a pound of bacon"
   end
 
   challenge "Detect single-character XOR" do
     hex_strings = ::File.open("./static/set1_challenge4.txt").readlines
     candidates  = hex_strings.map do |hex_string|
-      ::Detect.getsinglecharkey( ::Convert.h2barr(hex_string) )
+      ::Decrypt.findsinglecharkey( ::Convert.h2barr(hex_string) )
     end
 
-    puts candidates.max_by(&:score).plaintext
+    !! candidates.max_by(&:score).plaintext.match("Now that the party is jumping")
   end
 end

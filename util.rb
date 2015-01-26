@@ -1,6 +1,14 @@
 require 'base64'
 
-module Detect
+module Encrypt
+  class << self
+    def xorencrypt(plaintext, key)
+      ::Convert.xorbarr(plaintext.bytes, key.bytes)
+    end
+  end
+end
+
+module Decrypt
   class << self
     COMMON_LETTERS = %w(\  e t a o i n s r h l d c u m f p g w y b v k x j q z)
 
@@ -11,15 +19,16 @@ module Detect
       end
     end
 
-    def scorebytes_keybytes(cipherbytes, key_bytes)
-      xored_arr = ::Convert.xorbarr(cipherbytes, key_bytes)
-      plaintext = ::Convert.barr2s(xored_arr)
-      Candidate.new(key_bytes, plaintext.strip, scorefreq_string(plaintext))
+    def xordecrypt(cipherbytes, keybytes)
+      xored_bytes = ::Convert.xorbarr(cipherbytes, keybytes)
+      ::Convert.barr2s(xored_bytes)
     end
 
-    def getsinglecharkey(cipherbytes)
+    def findsinglecharkey(cipherbytes)
       candidates = (0..255).map do |byte|
-        ::Detect.scorebytes_keybytes(cipherbytes, [byte])
+        plaintext = xordecrypt(cipherbytes, [byte])
+        score     = scorefreq_string(plaintext)
+        Candidate.new([byte], plaintext.strip, score)
       end
 
       candidates.max_by(&:score)
