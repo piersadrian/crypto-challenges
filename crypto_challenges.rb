@@ -18,7 +18,9 @@ module CryptoChallenges
     end
 
     def print_description
-      puts "set #{number}: #{name}"
+      puts
+      puts name.upcase.magenta
+      puts "-" * 30
     end
   end
 
@@ -35,7 +37,7 @@ module CryptoChallenges
     end
 
     def description
-      "\tchallenge #{number}: #{name}"
+      "  ##{number}: #{name}"
     end
   end
 
@@ -54,10 +56,8 @@ module CryptoChallenges
       current_set.add_challenge(name, &block)
     end
 
-    def current_set; @sets.last end
-
-    def sets;       @sets ||= []       end
-    def challenges; @challenges ||= [] end
+    def current_set; sets.last    end
+    def sets;        @sets ||= [] end
   end
 end
 
